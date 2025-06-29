@@ -16,7 +16,7 @@ body {
     box-shadow: 0 0 0 5px #f7f8f8; /* Blue dotted border effect */
     border-top: 5px dotted #f8f9fa;
     border-bottom: 5px dotted #f4f6f7;
-    width: 95%;
+    width: 95%; /* ডিফল্টভাবে 95% প্রস্থ নেবে */
     max-width: 800px; /* কুইজ কন্টেইনারের সর্বোচ্চ প্রস্থ বাড়ানো হয়েছে */
     text-align: center;
     box-sizing: border-box;
@@ -373,10 +373,11 @@ h2 {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) { /* নতুন ব্রেকপয়েন্ট যোগ করা হয়েছে */
+@media (max-width: 768px) {
     .quiz-container {
         padding: 20px;
-        max-width: 90%;
+        width: 98%; /* ছোট স্ক্রিনে আরও বেশি প্রস্থ নেবে */
+        max-width: none; /* ছোট স্ক্রিনে max-width উঠিয়ে দেওয়া হলো */
     }
     .start-screen h1, .result-screen h2 {
         font-size: 2.2em;
@@ -405,14 +406,19 @@ h2 {
     .score-display {
         font-size: 1.6em;
     }
+    .question-index-display {
+        font-size: 1.2em; /* ছোট স্ক্রিনেও প্রশ্ন ইনডেক্স একটু বড় */
+    }
 }
 
 @media (max-width: 600px) {
     .quiz-container {
         padding: 15px;
+        width: 98%; /* নিশ্চিত করুন ছোট স্ক্রিনেও প্রায় পুরো প্রস্থ নেয় */
+        max-width: none; /* নিশ্চিত করুন ছোট স্ক্রিনে max-width দ্বারা সীমাবদ্ধ নয় */
     }
     .top-bar {
-        flex-direction: row;
+        flex-direction: row; /* টাইমার এবং স্কোর পাশাপাশি থাকবে */
         justify-content: space-between;
         margin-bottom: 15px;
     }
@@ -433,22 +439,22 @@ h2 {
         font-size: 1.4em;
     }
     .question-index-display {
-        font-size: 1em;
+        font-size: 1.1em; /* আরও সামঞ্জস্যপূর্ণ সাইজ */
         padding: 6px 12px;
         margin-top: -20px;
         margin-bottom: 15px;
     }
-    .question-text-box { /* Renamed */
+    .question-text-box {
         padding: 15px;
         min-height: 100px;
-        font-size: 1.3em;
+        font-size: 1.4em; /* মোবাইল স্ক্রিনে প্রশ্নের ফন্ট সাইজ */
     }
     .options-container {
-        gap: 10px;
+        gap: 12px; /* অপশনগুলির মধ্যে ফাঁকা স্থান */
     }
     .option {
         padding: 10px 15px;
-        font-size: 0.9em;
+        font-size: 1em; /* মোবাইল স্ক্রিনে অপশনের ফন্ট সাইজ */
     }
     .controls {
         flex-direction: column;
@@ -457,9 +463,9 @@ h2 {
         margin-top: 15px;
     }
     .navigation-button {
-        width: 80%;
-        max-width: 250px;
-        font-size: 1.05em;
+        width: 90%; /* মোবাইলে বাটন আরও চওড়া হবে */
+        max-width: 300px;
+        font-size: 1.1em;
     }
     .start-screen h1, .result-screen h2 {
         font-size: 2em;
@@ -468,6 +474,9 @@ h2 {
 }
 
 @media (max-width: 400px) {
+    .quiz-container {
+        padding: 10px; /* খুব ছোট স্ক্রিনে আরও কম প্যাডিং */
+    }
     .question-timer-circle {
         width: 60px;
         height: 60px;
@@ -485,19 +494,26 @@ h2 {
         font-size: 1.2em;
     }
     .question-index-display {
-        font-size: 0.9em;
+        font-size: 1em;
         padding: 5px 10px;
     }
-    .question-text-box { /* Renamed */
+    .question-text-box {
         padding: 10px;
         min-height: 80px;
-        font-size: 1.1em;
+        font-size: 1.2em; /* আরও ছোট স্ক্রিনে প্রশ্নের ফন্ট সাইজ */
     }
     .options-container {
-        gap: 8px;
+        gap: 10px;
     }
     .option {
         padding: 8px 12px;
-        font-size: 0.85em;
+        font-size: 0.95em; /* আরও ছোট স্ক্রিনে অপশনের ফন্ট সাইজ */
     }
-} 
+    .navigation-button {
+        width: 95%; /* খুব ছোট স্ক্রিনে বাটন আরও বেশি চওড়া */
+        font-size: 1em;
+    }
+    .start-screen h1, .result-screen h2 {
+        font-size: 1.8em;
+    }
+}
