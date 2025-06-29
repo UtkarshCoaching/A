@@ -198,7 +198,6 @@ function handleNameInputAndShowStartScreen() {
 
     nameInputScreen.classList.remove('active');
     startScreen.classList.add('active'); // নাম ইনপুট করার পর startScreen দেখান
-    // displayRankings(); // র‍্যাঙ্কিং শুধুমাত্র ফলাফলের স্ক্রিনে দেখানো হবে
 }
 
 
@@ -247,7 +246,10 @@ function startQuestionTimer() {
         updateQuestionTimerDisplay();
         if (questionTimeLeft <= 0) {
             clearInterval(questionTimerInterval);
-            handleTimeUp();
+            // Only proceed if the question hasn't been answered yet
+            if (!answeredQuestions[currentQuestionIndex]) {
+                handleTimeUp();
+            }
         }
     }, 1000);
 }
@@ -293,11 +295,11 @@ function loadQuestion() {
 
 
 function selectOption(selectedButton, selectedAnswer) {
-    if (answeredQuestions[currentQuestionIndex]) return;
+    if (answeredQuestions[currentQuestionIndex]) return; // Already answered, do nothing
 
-    clearInterval(questionTimerInterval);
+    clearInterval(questionTimerInterval); // Stop the timer as soon as an option is selected
 
-    disableOptions();
+    disableOptions(); // Disable options to prevent multiple clicks
 
     const currentQuestion = questions[currentQuestionIndex];
     const correctAnswer = currentQuestion.answer;
@@ -316,7 +318,8 @@ function selectOption(selectedButton, selectedAnswer) {
         wrongCount++;
         feedbackMessage.textContent = `ভুল উত্তর। সঠিক উত্তর: ${correctAnswer}`;
         feedbackMessage.style.color = '#dc3545';
-        
+
+        // Highlight the correct answer if the selected one was wrong
         Array.from(optionsContainer.children).forEach(optionBtn => {
             if (optionBtn.textContent === correctAnswer) {
                 optionBtn.classList.add('correct');
@@ -325,8 +328,9 @@ function selectOption(selectedButton, selectedAnswer) {
     }
 
     scoreDisplayElem.textContent = score.toFixed(2);
-    answeredQuestions[currentQuestionIndex] = true;
+    answeredQuestions[currentQuestionIndex] = true; // Mark as answered
 
+    // Show appropriate buttons
     nextButton.style.display = 'inline-block';
     skipButton.style.display = 'none';
     submitButton.style.display = (currentQuestionIndex === questions.length - 1) ? 'inline-block' : 'none';
@@ -334,18 +338,20 @@ function selectOption(selectedButton, selectedAnswer) {
 
 
 function handleTimeUp() {
+    // This check is crucial for preventing double-skips or skips after an answer
     if (answeredQuestions[currentQuestionIndex]) return;
 
     skippedCount++;
-    answeredQuestions[currentQuestionIndex] = true;
-    
-    showAnswer();
-    disableOptions();
-    
+    answeredQuestions[currentQuestionIndex] = true; // Mark as answered/skipped
+
+    showAnswer(); // Show the correct answer
+    disableOptions(); // Disable options
+
+    // Automatically move to the next question after a short delay
     setTimeout(() => {
         currentQuestionIndex++;
         loadQuestion();
-    }, 2000);
+    }, 2000); // 2 seconds delay
 }
 
 function showAnswer() {
@@ -353,14 +359,15 @@ function showAnswer() {
     const correctAnswer = currentQuestion.answer;
 
     Array.from(optionsContainer.children).forEach(optionBtn => {
-        optionBtn.style.pointerEvents = 'none';
+        optionBtn.style.pointerEvents = 'none'; // Ensure no further clicks
         if (optionBtn.textContent === correctAnswer) {
-                optionBtn.classList.add('correct');
+            optionBtn.classList.add('correct'); // Highlight correct answer
         }
     });
     feedbackMessage.textContent = `সঠিক উত্তর: ${correctAnswer}`;
-    feedbackMessage.style.color = '#ffc107';
-    
+    feedbackMessage.style.color = '#ffc107'; // Yellow/Orange color for skipped answer
+
+    // Ensure buttons are correctly displayed after showing answer
     nextButton.style.display = 'inline-block';
     skipButton.style.display = 'none';
     submitButton.style.display = (currentQuestionIndex === questions.length - 1) ? 'inline-block' : 'none';
@@ -382,33 +389,45 @@ function enableOptions() {
 
 
 function handleNextQuestion() {
+    // If user clicks Next without selecting an option, treat as skipped
     if (!answeredQuestions[currentQuestionIndex]) {
+        clearInterval(questionTimerInterval); // Stop timer
         skippedCount++;
         answeredQuestions[currentQuestionIndex] = true;
+        showAnswer(); // Show answer for skipped question
+        disableOptions(); // Disable options
+        // Wait briefly before moving to next question for skipped questions
+        setTimeout(() => {
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 1000); // Shorter delay for manual skip
+    } else {
+        // If already answered, just move to next
+        currentQuestionIndex++;
+        loadQuestion();
     }
-    currentQuestionIndex++;
-    loadQuestion();
 }
 
 function handleSkipQuestion() {
+    // This is essentially the same as handleTimeUp, but triggered by button click
     if (!answeredQuestions[currentQuestionIndex]) {
         clearInterval(questionTimerInterval);
         skippedCount++;
         answeredQuestions[currentQuestionIndex] = true;
-        
+
         showAnswer();
         disableOptions();
-        
+
         setTimeout(() => {
             currentQuestionIndex++;
             loadQuestion();
-        }, 2000);
+        }, 1000); // Shorter delay for manual skip
     }
 }
 
 
 function handleSubmitQuiz() {
-    clearInterval(questionTimerInterval);
+    clearInterval(questionTimerInterval); // Stop any running timer
     quizScreen.classList.remove('active');
     resultScreen.classList.add('active');
 
@@ -433,8 +452,9 @@ function saveQuizResult() {
         return;
     }
 
-    // Firebase-এর 'quizResults' পাথে ডেটা পুশ করুন
-    database.ref('quizResults').push({
+    // Firebase-এর 'quizResults' পাথে এবং QUIZ_ID এর অধীনে ডেটা পুশ করুন
+    // খেয়াল রাখবেন QUIZ_ID কে অবশ্যই index.html এ সংজ্ঞায়িত করতে হবে।
+    database.ref('quizResults/' + QUIZ_ID).push({
         name: userName, // কুইজের শুরুতে নেওয়া নাম
         score: score.toFixed(2), // স্কোর দশমিক সংখ্যা হিসেবে সেভ করুন
         correct: correctCount,
@@ -445,7 +465,6 @@ function saveQuizResult() {
     })
     .then(() => {
         console.log("ফলাফল সফলভাবে Firebase-এ সেভ হয়েছে!");
-        // যদি দরকার হয়, এখানে কোনো সফলতার মেসেজ দেখাতে পারেন
     })
     .catch((error) => {
         console.error("ফলাফল সেভ করতে সমস্যা হয়েছে:", error);
@@ -453,16 +472,43 @@ function saveQuizResult() {
     });
 }
 
-// Firebase থেকে র‍্যাঙ্কিং লোড এবং প্রদর্শন করুন
+// Firebase থেকে র‍্যাঙ্কিং লোড এবং প্রদর্শন করুন (প্রতি ব্যবহারকারীর সর্বোচ্চ স্কোর)
 function displayRankings() {
     rankListElem.innerHTML = '<li>র‍্যাঙ্কিং লোড হচ্ছে...</li>';
 
-    database.ref('quizResults').orderByChild('score').limitToLast(10).once('value', (snapshot) => {
-        const rankings = [];
+    // Firebase-এর 'quizResults/QUIZ_ID' পাথে থেকে ডেটা লোড করুন
+    database.ref('quizResults/' + QUIZ_ID).once('value', (snapshot) => {
+        const userHighestScores = {}; // প্রতিটি ব্যবহারকারীর সর্বোচ্চ স্কোর সংরক্ষণের জন্য
+
         snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
-            rankings.push(data);
+            // Undefined বা invalid নাম এন্ট্রি বাদ দিন
+            if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
+                // Optionally log to see bad data
+                // console.warn("Invalid name found in Firebase data:", data);
+                return; // Skip this entry
+            }
+            // Invalid স্কোর এন্ট্রি বাদ দিন
+            const userScore = parseFloat(data.score);
+            if (isNaN(userScore)) {
+                // Optionally log to see bad data
+                // console.warn("Invalid score found for user:", data.name, data.score);
+                return; // Skip this entry
+            }
+            
+            const userName = data.name;
+
+            // যদি এই ব্যবহারকারী প্রথমবারের মতো আসে অথবা বর্তমান স্কোর পূর্ববর্তী সর্বোচ্চ স্কোরের চেয়ে বেশি হয়
+            if (!userHighestScores[userName] || userScore > userHighestScores[userName].score) {
+                userHighestScores[userName] = {
+                    name: userName,
+                    score: userScore
+                };
+            }
         });
+
+        // userHighestScores অবজেক্ট থেকে অ্যারে তৈরি করুন
+        const rankings = Object.values(userHighestScores);
 
         // স্কোর অনুযায়ী ডিসেন্ডিং অর্ডারে সর্ট করুন
         rankings.sort((a, b) => b.score - a.score);
@@ -473,14 +519,13 @@ function displayRankings() {
         } else {
             rankings.forEach((entry, index) => {
                 const listItem = document.createElement('li');
-                // র‍্যাঙ্কিং এ ব্যবহারকারীর নাম দেখাচ্ছে
-                listItem.textContent = `${index + 1}. ${entry.name} - স্কোর: ${entry.score}`;
+                listItem.textContent = `${index + 1}. ${entry.name} - স্কোর: ${entry.score.toFixed(2)}`;
                 rankListElem.appendChild(listItem);
             });
         }
     })
     .catch((error) => {
         console.error("র‍্যাঙ্কিং লোড করতে সমস্যা হয়েছে:", error);
-        rankListElem.innerHTML = '<li>র র‍্যাঙ্কিং লোড করা যায়নি।</li>';
+        rankListElem.innerHTML = '<li>র‍্যাঙ্কিং লোড করা যায়নি।</li>';
     });
-}
+} 
